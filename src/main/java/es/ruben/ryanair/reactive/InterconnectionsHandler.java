@@ -15,6 +15,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 @Slf4j
@@ -37,9 +39,12 @@ public class InterconnectionsHandler {
                     .body(BodyInserters.fromProducer(interconnections.map(interconnectionsDtoMapper::toDto), InterconnectionDto.class));
         } catch (Exception e) {
             log.error(e.getMessage(), e);
+            Map<String, String> json = new HashMap<>();
+            json.put("exception", e.getClass().getSimpleName());
+            json.put("description", e.getMessage());
             return ServerResponse.badRequest()
                     .contentType(MediaType.APPLICATION_JSON)
-                    .body(BodyInserters.fromValue(e.getMessage()));
+                    .body(BodyInserters.fromValue(json));
         }
     }
 }
