@@ -24,8 +24,8 @@ public class InterconnectionsHandler {
     private final InterconnectionsDtoMapper interconnectionsDtoMapper;
 
     public Mono<ServerResponse> interconnections(ServerRequest request) {
-        String departure = request.queryParam("departure").orElse(null);
-        String arrival = request.queryParam("arrival").orElse(null);
+        String departure = Objects.requireNonNull(request.queryParam("departure").orElse(null));
+        String arrival = Objects.requireNonNull(request.queryParam("arrival").orElse(null));
         LocalDateTime departureDateTime = LocalDateTime.parse(Objects.requireNonNull(request.queryParam("departureDateTime").orElse(null)));
         LocalDateTime arrivalDateTime = LocalDateTime.parse(Objects.requireNonNull(request.queryParam("arrivalDateTime").orElse(null)));
         Flux<Interconnection> interconnections = interconnectionService.getInterconnections(departure, arrival, departureDateTime, arrivalDateTime);
