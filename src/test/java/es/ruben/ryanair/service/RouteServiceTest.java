@@ -33,7 +33,7 @@ public class RouteServiceTest {
         routeService = new RouteServiceImpl(webClient, new RouteDtoMapperImpl());
 
         // When
-        List<Route> result = routeService.getRoutes().collectList().block();
+        List<Route> result = routeService.getRoutes().collectList().blockOptional().orElse(null);
 
         // Then
         assertNotNull(result);
@@ -53,7 +53,7 @@ public class RouteServiceTest {
         routeService = new RouteServiceImpl(webClient, new RouteDtoMapperImpl());
 
         // When
-        List<Route> result = routeService.getRoutes().collectList().block();
+        List<Route> result = routeService.getRoutes().collectList().blockOptional().orElse(null);
 
         // Then
         assertNotNull(result);

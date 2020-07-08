@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 
@@ -21,10 +22,10 @@ public class InterconnectionsEndpoint {
     private final InterconnectionService interconnectionService;
     private final InterconnectionsDtoMapper interconnectionsDtoMapper;
 
-    @GetMapping("/interconnections")
+    @GetMapping("/blocking/interconnections")
     public ResponseEntity<List<InterconnectionDto>> getInterconnectedFlights(SearchCriteriaDto searchCriteriaDto) {
         log.info("Getting all interconnections for: {}", searchCriteriaDto.toString());
-        List<Interconnection> interconnections = interconnectionService.getInterconnections(searchCriteriaDto.getDeparture(), searchCriteriaDto.getArrival(), searchCriteriaDto.getDepartureDateTime(), searchCriteriaDto.getArrivalDateTime());
-        return ResponseEntity.ok(interconnectionsDtoMapper.toDto(interconnections));
+        Flux<Interconnection> interconnections = interconnectionService.getInterconnections(searchCriteriaDto.getDeparture(), searchCriteriaDto.getArrival(), searchCriteriaDto.getDepartureDateTime(), searchCriteriaDto.getArrivalDateTime());
+        return ResponseEntity.ok(interconnectionsDtoMapper.toDto(interconnections.collectList().block()));
     }
 }

@@ -28,11 +28,10 @@ public class InterconnectionServiceTest {
         LocalDateTime arrivalDateTime = LocalDateTime.parse("2020-08-03T07:00");
 
         // When
-        List<Interconnection> result = interconnectionService.getInterconnections(departureAirport, arrivalAirport, departureDateTime, arrivalDateTime);
+        List<Interconnection> result = interconnectionService.getInterconnections(departureAirport, arrivalAirport, departureDateTime, arrivalDateTime).collectList().blockOptional().orElse(null);
 
         // Then
         assertNotNull(result);
-        log.info(result.toString());
-        assertEquals(3, result.size());
+        assertEquals(24, result.size());
     }
 }

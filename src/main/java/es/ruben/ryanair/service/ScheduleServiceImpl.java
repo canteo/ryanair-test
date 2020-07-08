@@ -8,12 +8,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Flux;
 
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,13 +26,13 @@ public class ScheduleServiceImpl implements ScheduleService {
     private final WebClient ryanairWebClient;
 
     @Override
-    public List<Flight> getScheduledFlights(String departure, String arrival, LocalDateTime departureDateTime, LocalDateTime arrivalDateTime) {
-        List<Flight> result = new ArrayList<>();
+    public Flux<Flight> getScheduledFlights(String departure, String arrival, LocalDateTime departureDateTime, LocalDateTime arrivalDateTime) {
+        Flux<Flight> result = Flux.fromIterable(Collections.emptyList());
         for (int i = departureDateTime.getYear(); i <= arrivalDateTime.getYear(); i++) {
             for (int j = departureDateTime.getMonthValue(); j <= arrivalDateTime.getMonthValue(); j++) {
                 int year = i;
                 int month = j;
-                List<Flight> flights = ryanairWebClient
+                Flux<Flight> flights = ryanairWebClient
                         .get()
                         .uri(uriBuilder -> uriBuilder
                                 .path("/timtbl/3/schedules/{departure}/{arrival}/years/{year}/months/{month}")
@@ -39,11 +40,8 @@ public class ScheduleServiceImpl implements ScheduleService {
                         .retrieve()
                         .bodyToFlux(ScheduleDto.class)
 //                        .doOnNext(dto -> log.info(dto.toString()))
-                        .map(scheduleDto -> getFlights(scheduleDto, departure, arrival, departureDateTime, arrivalDateTime))
-                        .blockLast();
-                if (flights != null) {
-                    result.addAll(flights);
-                }
+                        .flatMap(scheduleDto -> Flux.fromIterable(getFlights(scheduleDto, departure, arrival, departureDateTime, arrivalDateTime)));
+                result = Flux.concat(result, flights);
             }
         }
         return result;

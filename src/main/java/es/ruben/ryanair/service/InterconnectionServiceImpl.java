@@ -10,12 +10,8 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -26,42 +22,28 @@ public class InterconnectionServiceImpl implements InterconnectionService {
     private final ScheduleService scheduleService;
 
     @Override
-    public List<Interconnection> getInterconnections(String departureAirport, String arrivalAirport, LocalDateTime departureDateTime, LocalDateTime arrivalDateTime) {
+    public Flux<Interconnection> getInterconnections(String departureAirport, String arrivalAirport, LocalDateTime departureDateTime, LocalDateTime arrivalDateTime) {
         Flux<Route> routes = routeService.getRoutes();
-        Stream<Interconnection> directFlights = routes
-                .toStream().parallel()
+        Flux<Interconnection> directFlights = routes
                 .filter(route -> route.getAirportFrom().equals(departureAirport) && route.getAirportTo().equals(arrivalAirport))
-                .flatMap(route -> generateInterconnectionsDirectFlights(route, departureDateTime, arrivalDateTime).stream());
-        Stream<Interconnection> oneStopFlights = routes
-                .toStream().parallel()
+                .flatMap(route -> generateInterconnectionsDirectFlights(route, departureDateTime, arrivalDateTime));
+        Flux<Interconnection> oneStopFlights = routes
                 .filter(route -> route.getAirportFrom().equals(departureAirport) && !route.getAirportTo().equals(arrivalAirport))
-                .flatMap(route -> generateInterconnectionsOneStop(route, arrivalAirport, departureDateTime, arrivalDateTime).stream());
-        return Stream.concat(directFlights, oneStopFlights)
-                .collect(Collectors.toList());
+                .flatMap(route -> generateInterconnectionsOneStop(route, arrivalAirport, departureDateTime, arrivalDateTime));
+        return Flux.concat(directFlights, oneStopFlights);
     }
 
-    private List<Interconnection> generateInterconnectionsOneStop(Route route, String arrivalAirport, LocalDateTime departureDateTime, LocalDateTime arrivalDateTime) {
-        List<Flight> firstLegFlights = scheduleService.getScheduledFlights(route.getAirportFrom(), route.getAirportTo(), departureDateTime, arrivalDateTime);
-        List<Flight> secondLegFlights = scheduleService.getScheduledFlights(route.getAirportTo(), arrivalAirport, departureDateTime, arrivalDateTime);
-        if (firstLegFlights.isEmpty() || secondLegFlights.isEmpty()) {
-            return Collections.emptyList();
-        }
-        List<Interconnection> interconnections = new ArrayList<>();
-        for (Flight firstLegFlight : firstLegFlights) {
-            for (Flight secondLegFlight : secondLegFlights) {
-                if (firstLegFlight.getArrivalDateTime().plusHours(2).isBefore(secondLegFlight.getDepartureDateTime())) {
-                    interconnections.add(mapToInterconnection(firstLegFlight, secondLegFlight));
-                }
-            }
-        }
-        return interconnections;
+    private Flux<Interconnection> generateInterconnectionsOneStop(Route route, String arrivalAirport, LocalDateTime departureDateTime, LocalDateTime arrivalDateTime) {
+        Flux<Flight> firstLegFlights = scheduleService.getScheduledFlights(route.getAirportFrom(), route.getAirportTo(), departureDateTime, arrivalDateTime);
+        Flux<Flight> secondLegFlights = scheduleService.getScheduledFlights(route.getAirportTo(), arrivalAirport, departureDateTime, arrivalDateTime);
+        return firstLegFlights.flatMap(firstLegFlight -> secondLegFlights
+                .filter(secondLegFlight -> firstLegFlight.getArrivalDateTime().plusHours(2).isBefore(secondLegFlight.getDepartureDateTime()))
+                .map(secondLegFlight -> mapToInterconnection(firstLegFlight, secondLegFlight)));
     }
 
-    private List<Interconnection> generateInterconnectionsDirectFlights(Route route, LocalDateTime departureDateTime, LocalDateTime arrivalDateTime) {
+    private Flux<Interconnection> generateInterconnectionsDirectFlights(Route route, LocalDateTime departureDateTime, LocalDateTime arrivalDateTime) {
         return scheduleService.getScheduledFlights(route.getAirportFrom(), route.getAirportTo(), departureDateTime, arrivalDateTime)
-                .stream()
-                .map(this::mapToInterconnection)
-                .collect(Collectors.toList());
+                .map(this::mapToInterconnection);
     }
 
     private Interconnection mapToInterconnection(Flight... flights) {

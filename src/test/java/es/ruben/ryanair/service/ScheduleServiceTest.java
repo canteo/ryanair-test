@@ -37,12 +37,11 @@ public class ScheduleServiceTest {
         scheduleService = new ScheduleServiceImpl(webClient);
 
         // When
-        List<Flight> result = scheduleService.getScheduledFlights(departureAirport, arrivalAirport, departureDateTime, arrivalDateTime);
+        List<Flight> result = scheduleService.getScheduledFlights(departureAirport, arrivalAirport, departureDateTime, arrivalDateTime).collectList().blockOptional().orElse(null);
 
         // Then
         assertNotNull(result);
         assertEquals(12, result.size());
-        log.info(result.toString());
     }
 
     @Test
@@ -62,11 +61,10 @@ public class ScheduleServiceTest {
         scheduleService = new ScheduleServiceImpl(webClient);
 
         // When
-        List<Flight> result = scheduleService.getScheduledFlights(departureAirport, arrivalAirport, departureDateTime, arrivalDateTime);
+        List<Flight> result = scheduleService.getScheduledFlights(departureAirport, arrivalAirport, departureDateTime, arrivalDateTime).collectList().blockOptional().orElse(null);
 
         // Then
         assertNotNull(result);
         assertEquals(20, result.size());
-        log.info(result.toString());
     }
 }
