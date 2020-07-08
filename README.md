@@ -9,7 +9,6 @@ This is my interview test developed for Ryanair
 * Reactive version
 * Blocking version
 * How to run tests
-* Deployment instructions
 
 #### Summary of set up ####
 This project has been developed with 2 different approaches (reactive and blocking)
@@ -38,7 +37,7 @@ This project depends on the below tech stack/frameworks
 * Mapstruct
 * Lombok
 
-##### Reactive version #####
+#### Reactive version ####
 Once you clone this repo locally you can run the below command to generate an executable JAR
 
     $ mvn clean install -DskipTests
@@ -49,7 +48,7 @@ and then run the below command to start up the Netty server
     
 After this is done without trouble, you should be able to hit the endpoint at: http://localhost:8080/reactive/interconnections?departure=DUB&arrival=WRO&departureDateTime=2020-08-01T07:00&arrivalDateTime=2020-08-30T07:00
 and see the results.
-##### Blocking version #####
+#### Blocking version ####
 Once you clone this repo locally you should uncomment the dependency on the spring-boot-web-starter in the pom.xml file
  
     <!--        <dependency>-->
@@ -68,7 +67,7 @@ and then run the below command to start up the Tomcat server
 After this is done without trouble, you should be able to hit the endpoint at: http://localhost:8080/blocking/interconnections?departure=DUB&arrival=WRO&departureDateTime=2020-08-01T07:00&arrivalDateTime=2020-08-30T07:00
 and see the results.
 
-##### How to run the tests #####
+#### How to run the tests ####
 Testing this project has been a bit of a challenge. Having said that, i think i managed
 to test the important bits of it that cover most of the use cases.
 Since this project is dependent on some external APIs trying to mock that part was not always easy.
