@@ -28,35 +28,37 @@ public class ScheduleServiceImpl implements ScheduleService {
     @Override
     public Flux<Flight> getScheduledFlights(String departure, String arrival, LocalDateTime departureDateTime, LocalDateTime arrivalDateTime) {
         Flux<Flight> result = Flux.fromIterable(Collections.emptyList());
-        for (int i = departureDateTime.getYear(); i <= arrivalDateTime.getYear(); i++) {
-            for (int j = departureDateTime.getMonthValue(); j <= arrivalDateTime.getMonthValue(); j++) {
-                int year = i;
-                int month = j;
-                Flux<Flight> flights = ryanairWebClient
-                        .get()
-                        .uri(uriBuilder -> uriBuilder
-                                .path("/timtbl/3/schedules/{departure}/{arrival}/years/{year}/months/{month}")
-                                .build(departure, arrival, year, month))
-                        .retrieve()
-                        .bodyToFlux(ScheduleDto.class)
-//                        .doOnNext(dto -> log.info(dto.toString()))
-                        .flatMap(scheduleDto -> Flux.fromIterable(getFlights(scheduleDto, departure, arrival, departureDateTime, arrivalDateTime)));
+        for (int year = departureDateTime.getYear(); year <= arrivalDateTime.getYear(); year++) {
+            for (int month = departureDateTime.getMonthValue(); month <= arrivalDateTime.getMonthValue(); month++) {
+                Flux<Flight> flights = fetchFlights(departure, arrival, year, month, departureDateTime, arrivalDateTime);
                 result = Flux.concat(result, flights);
             }
         }
         return result;
     }
 
-    private List<Flight> getFlights(ScheduleDto scheduleDto, String departure, String arrival, LocalDateTime departureDateTime, LocalDateTime arrivalDateTime) {
+    private Flux<Flight> fetchFlights(String departure, String arrival, int year, int month, LocalDateTime departureDateTime, LocalDateTime arrivalDateTime) {
+        return ryanairWebClient
+                .get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/timtbl/3/schedules/{departure}/{arrival}/years/{year}/months/{month}")
+                        .build(departure, arrival, year, month))
+                .retrieve()
+                .bodyToFlux(ScheduleDto.class)
+//                        .doOnNext(dto -> log.info(dto.toString()))
+                .flatMap(scheduleDto -> Flux.fromIterable(mapToListOfFlights(scheduleDto, departure, arrival, departureDateTime, arrivalDateTime)));
+    }
+
+    private List<Flight> mapToListOfFlights(ScheduleDto scheduleDto, String departure, String arrival, LocalDateTime departureDateTime, LocalDateTime arrivalDateTime) {
         return scheduleDto.getDays().stream()
                 .flatMap(dayDto -> dayDto.getFlights().stream()
-                        .map(flightDto -> getFlight(scheduleDto, dayDto, flightDto, departure, arrival, departureDateTime)))
+                        .map(flightDto -> mapToFlight(scheduleDto, dayDto, flightDto, departure, arrival, departureDateTime)))
 //                .peek(flight -> log.info(flight.toString()))
                 .filter(flight -> flight.getDepartureDateTime().isAfter(departureDateTime) && flight.getArrivalDateTime().isBefore(arrivalDateTime))
                 .collect(Collectors.toList());
     }
 
-    private Flight getFlight(ScheduleDto scheduleDto, DayDto dayDto, FlightDto flightDto, String departure, String arrival, LocalDateTime departureDateTime) {
+    private Flight mapToFlight(ScheduleDto scheduleDto, DayDto dayDto, FlightDto flightDto, String departure, String arrival, LocalDateTime departureDateTime) {
         LocalDateTime flightDepartureDateTime = getDateTime(departureDateTime.getYear(), scheduleDto.getMonth(), dayDto.getDay(), flightDto.getDepartureTime());
         Duration duration = getFlightDuration(flightDto.getDepartureTime(), flightDto.getArrivalTime());
         LocalDateTime flightArrivalDateTime = flightDepartureDateTime.plusMinutes(duration.toMinutes());
