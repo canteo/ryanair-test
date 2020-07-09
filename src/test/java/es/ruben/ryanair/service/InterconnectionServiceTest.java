@@ -38,50 +38,45 @@ public class InterconnectionServiceTest {
     @Test
     public void getInterconnections() {
         // Given
-        Route route1 = new Route();
-        route1.setAirportFrom("DUB");
-        route1.setAirportTo("WRO");
-        Route route2 = new Route();
-        route2.setAirportFrom("DUB");
-        route2.setAirportTo("MAD");
-        Route route3 = new Route();
-        route3.setAirportFrom("MAD");
-        route3.setAirportTo("WRO");
-        Route route4 = new Route();
-        route4.setAirportFrom("STN");
-        route4.setAirportTo("LTN");
-        List<Route> routes = Arrays.asList(route1, route2, route3, route4);
         when(routeService.getRoutes())
-                .thenReturn(Flux.fromIterable(routes));
-        Flight flight1 = new Flight();
-        flight1.setDepartureAirport("DUB");
-        flight1.setArrivalAirport("WRO");
-        flight1.setDepartureDateTime(LocalDateTime.parse("2020-08-01T10:00"));
-        flight1.setArrivalDateTime(LocalDateTime.parse("2020-08-01T12:30"));
-        Flight flight2 = new Flight();
-        flight2.setDepartureAirport("DUB");
-        flight2.setArrivalAirport("MAD");
-        flight2.setDepartureDateTime(LocalDateTime.parse("2020-08-01T09:30"));
-        flight2.setArrivalDateTime(LocalDateTime.parse("2020-08-01T12:00"));
-        Flight flight3 = new Flight();
-        flight3.setDepartureAirport("DUB");
-        flight3.setArrivalAirport("MAD");
-        flight3.setDepartureDateTime(LocalDateTime.parse("2020-08-02T10:00"));
-        flight3.setArrivalDateTime(LocalDateTime.parse("2020-08-02T12:30"));
-        Flight flight4 = new Flight();
-        flight4.setDepartureAirport("MAD");
-        flight4.setArrivalAirport("WRO");
-        flight4.setDepartureDateTime(LocalDateTime.parse("2020-08-02T23:00"));
-        flight4.setArrivalDateTime(LocalDateTime.parse("2020-08-03T01:30"));
-        List<Flight> dubWroSchedules = Collections.singletonList(flight1);
+                .thenReturn(Flux.fromIterable(Arrays.asList(
+                        Route.builder().airportFrom("DUB").airportTo("WRO").build(),
+                        Route.builder().airportFrom("DUB").airportTo("MAD").build(),
+                        Route.builder().airportFrom("MAD").airportTo("WRO").build(),
+                        Route.builder().airportFrom("STN").airportTo("LTN").build())));
         when(scheduleService.getScheduledFlights(eq("DUB"), eq("WRO"), eq(LocalDateTime.parse("2020-08-01T07:00")), eq(LocalDateTime.parse("2020-08-03T07:00"))))
-                .thenReturn(Flux.fromIterable(dubWroSchedules));
-        List<Flight> dubMadSchedules = Arrays.asList(flight2, flight3);
+                .thenReturn(Flux.fromIterable(Collections.singleton(
+                        Flight.builder()
+                                .departureAirport("DUB")
+                                .arrivalAirport("WRO")
+                                .departureDateTime(LocalDateTime.parse("2020-08-01T10:00"))
+                                .arrivalDateTime(LocalDateTime.parse("2020-08-01T12:30"))
+                                .build()
+                )));
         when(scheduleService.getScheduledFlights(eq("DUB"), eq("MAD"), eq(LocalDateTime.parse("2020-08-01T07:00")), eq(LocalDateTime.parse("2020-08-03T07:00"))))
-                .thenReturn(Flux.fromIterable(dubMadSchedules));
-        List<Flight> madWroSchedules = Collections.singletonList(flight4);
+                .thenReturn(Flux.fromIterable(Arrays.asList(
+                        Flight.builder()
+                                .departureAirport("DUB")
+                                .arrivalAirport("MAD")
+                                .departureDateTime(LocalDateTime.parse("2020-08-01T09:30"))
+                                .arrivalDateTime(LocalDateTime.parse("2020-08-01T12:00"))
+                                .build(),
+                        Flight.builder()
+                                .departureAirport("DUB")
+                                .arrivalAirport("MAD")
+                                .departureDateTime(LocalDateTime.parse("2020-08-02T10:00"))
+                                .arrivalDateTime(LocalDateTime.parse("2020-08-02T12:30"))
+                                .build()
+                )));
         when(scheduleService.getScheduledFlights(eq("MAD"), eq("WRO"), eq(LocalDateTime.parse("2020-08-01T07:00")), eq(LocalDateTime.parse("2020-08-03T07:00"))))
-                .thenReturn(Flux.fromIterable(madWroSchedules));
+                .thenReturn(Flux.fromIterable(Collections.singleton(
+                        Flight.builder()
+                                .departureAirport("MAD")
+                                .arrivalAirport("WRO")
+                                .departureDateTime(LocalDateTime.parse("2020-08-02T23:00"))
+                                .arrivalDateTime(LocalDateTime.parse("2020-08-03T01:30"))
+                                .build()
+                )));
         String departureAirport = "DUB";
         String arrivalAirport = "WRO";
         LocalDateTime departureDateTime = LocalDateTime.parse("2020-08-01T07:00");

@@ -60,13 +60,13 @@ public class ScheduleServiceImpl implements ScheduleService {
         LocalDateTime flightDepartureDateTime = getDateTime(departureDateTime.getYear(), scheduleDto.getMonth(), dayDto.getDay(), flightDto.getDepartureTime());
         Duration duration = getFlightDuration(flightDto.getDepartureTime(), flightDto.getArrivalTime());
         LocalDateTime flightArrivalDateTime = flightDepartureDateTime.plusMinutes(duration.toMinutes());
-        Flight flight = new Flight();
-        flight.setNumber(flightDto.getNumber());
-        flight.setDepartureAirport(departure);
-        flight.setDepartureDateTime(flightDepartureDateTime);
-        flight.setArrivalAirport(arrival);
-        flight.setArrivalDateTime(flightArrivalDateTime);
-        return flight;
+        return Flight.builder()
+                .number(flightDto.getNumber())
+                .departureAirport(departure)
+                .arrivalAirport(arrival)
+                .departureDateTime(flightDepartureDateTime)
+                .arrivalDateTime(flightArrivalDateTime)
+                .build();
     }
 
     private LocalDateTime getDateTime(Integer year, Integer month, Integer day, LocalTime time) {
