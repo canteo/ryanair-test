@@ -45,19 +45,20 @@ public class ScheduleServiceImpl implements ScheduleService {
                 .retrieve()
                 .bodyToFlux(ScheduleDto.class)
 //                        .doOnNext(dto -> log.info(dto.toString()))
-                .flatMap(scheduleDto -> Flux.fromIterable(mapToListOfFlights(scheduleDto, departure, arrival, departureDateTime, arrivalDateTime)));
+                .map(scheduleDto -> toListOfFlights(scheduleDto, departure, arrival, departureDateTime, arrivalDateTime))
+                .flatMap(Flux::fromIterable);
     }
 
-    private List<Flight> mapToListOfFlights(ScheduleDto scheduleDto, String departure, String arrival, LocalDateTime departureDateTime, LocalDateTime arrivalDateTime) {
+    private List<Flight> toListOfFlights(ScheduleDto scheduleDto, String departure, String arrival, LocalDateTime departureDateTime, LocalDateTime arrivalDateTime) {
         return scheduleDto.getDays().stream()
                 .flatMap(dayDto -> dayDto.getFlights().stream()
-                        .map(flightDto -> mapToFlight(scheduleDto, dayDto, flightDto, departure, arrival, departureDateTime)))
+                        .map(flightDto -> toFlight(scheduleDto, dayDto, flightDto, departure, arrival, departureDateTime)))
 //                .peek(flight -> log.info(flight.toString()))
                 .filter(flight -> flight.getDepartureDateTime().isAfter(departureDateTime) && flight.getArrivalDateTime().isBefore(arrivalDateTime))
                 .collect(Collectors.toList());
     }
 
-    private Flight mapToFlight(ScheduleDto scheduleDto, DayDto dayDto, FlightDto flightDto, String departure, String arrival, LocalDateTime departureDateTime) {
+    private Flight toFlight(ScheduleDto scheduleDto, DayDto dayDto, FlightDto flightDto, String departure, String arrival, LocalDateTime departureDateTime) {
         LocalDateTime flightDepartureDateTime = getDateTime(departureDateTime.getYear(), scheduleDto.getMonth(), dayDto.getDay(), flightDto.getDepartureTime());
         Duration duration = getFlightDuration(flightDto.getDepartureTime(), flightDto.getArrivalTime());
         LocalDateTime flightArrivalDateTime = flightDepartureDateTime.plusMinutes(duration.toMinutes());
