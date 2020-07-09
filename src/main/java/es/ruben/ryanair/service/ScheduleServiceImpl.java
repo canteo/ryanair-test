@@ -14,9 +14,10 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -27,14 +28,12 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     @Override
     public Flux<Flight> getScheduledFlights(String departure, String arrival, LocalDateTime departureDateTime, LocalDateTime arrivalDateTime) {
-        Flux<Flight> result = Flux.fromIterable(Collections.emptyList());
-        for (int year = departureDateTime.getYear(); year <= arrivalDateTime.getYear(); year++) {
-            for (int month = departureDateTime.getMonthValue(); month <= arrivalDateTime.getMonthValue(); month++) {
-                Flux<Flight> flights = fetchFlights(departure, arrival, year, month, departureDateTime, arrivalDateTime);
-                result = Flux.concat(result, flights);
-            }
-        }
-        return result;
+        return IntStream.rangeClosed(departureDateTime.getYear(), arrivalDateTime.getYear())
+                .mapToObj(year -> IntStream.rangeClosed(departureDateTime.getMonthValue(), arrivalDateTime.getMonthValue())
+                        .mapToObj(month -> fetchFlights(departure, arrival, year, month, departureDateTime, arrivalDateTime))
+                        .collect(Collectors.toList()))
+                .flatMap(Collection::stream)
+                .reduce(Flux.empty(), (acc, flight) -> Flux.concat(acc, flight));
     }
 
     private Flux<Flight> fetchFlights(String departure, String arrival, int year, int month, LocalDateTime departureDateTime, LocalDateTime arrivalDateTime) {
