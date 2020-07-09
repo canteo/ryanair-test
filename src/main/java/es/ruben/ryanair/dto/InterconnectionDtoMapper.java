@@ -8,7 +8,7 @@ import org.mapstruct.Mapper;
 import java.util.List;
 
 @Mapper(componentModel = "spring")
-public interface InterconnectionsDtoMapper {
+public interface InterconnectionDtoMapper {
     List<InterconnectionDto> toDto(List<Interconnection> list);
 
     InterconnectionDto toDto(Interconnection entity);

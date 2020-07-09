@@ -1,6 +1,6 @@
 package es.ruben.ryanair.endpoint;
 
-import es.ruben.ryanair.dto.InterconnectionsDtoMapper;
+import es.ruben.ryanair.dto.InterconnectionDtoMapper;
 import es.ruben.ryanair.dto.model.InterconnectionDto;
 import es.ruben.ryanair.dto.model.SearchCriteriaDto;
 import es.ruben.ryanair.model.Interconnection;
@@ -20,12 +20,12 @@ import java.util.List;
 public class InterconnectionsEndpoint {
 
     private final InterconnectionService interconnectionService;
-    private final InterconnectionsDtoMapper interconnectionsDtoMapper;
+    private final InterconnectionDtoMapper interconnectionDtoMapper;
 
     @GetMapping("/blocking/interconnections")
     public ResponseEntity<List<InterconnectionDto>> getInterconnectedFlights(SearchCriteriaDto searchCriteriaDto) {
         log.info("Getting all interconnections for: {}", searchCriteriaDto.toString());
         Flux<Interconnection> interconnections = interconnectionService.getInterconnections(searchCriteriaDto.getDeparture(), searchCriteriaDto.getArrival(), searchCriteriaDto.getDepartureDateTime(), searchCriteriaDto.getArrivalDateTime());
-        return ResponseEntity.ok(interconnectionsDtoMapper.toDto(interconnections.collectList().block()));
+        return ResponseEntity.ok(interconnectionDtoMapper.toDto(interconnections.collectList().block()));
     }
 }

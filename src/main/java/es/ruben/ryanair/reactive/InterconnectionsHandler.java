@@ -1,7 +1,10 @@
 package es.ruben.ryanair.reactive;
 
-import es.ruben.ryanair.dto.InterconnectionsDtoMapper;
+import es.ruben.ryanair.dto.ExceptionDtoMapper;
+import es.ruben.ryanair.dto.InterconnectionDtoMapper;
 import es.ruben.ryanair.dto.model.InterconnectionDto;
+import es.ruben.ryanair.exception.QueryParamIsNullException;
+import es.ruben.ryanair.exception.RyanairTestException;
 import es.ruben.ryanair.model.Interconnection;
 import es.ruben.ryanair.service.InterconnectionService;
 import lombok.RequiredArgsConstructor;
@@ -15,9 +18,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -25,26 +25,28 @@ import java.util.Objects;
 public class InterconnectionsHandler {
 
     private final InterconnectionService interconnectionService;
-    private final InterconnectionsDtoMapper interconnectionsDtoMapper;
+    private final InterconnectionDtoMapper interconnectionDtoMapper;
+    private final ExceptionDtoMapper exceptionDtoMapper;
 
     public Mono<ServerResponse> interconnections(ServerRequest request) {
         try {
-            String departure = Objects.requireNonNull(request.queryParam("departure").orElse(null), "'departure' query param must not be null");
-            String arrival = Objects.requireNonNull(request.queryParam("arrival").orElse(null), "'arrival' query param must not be null");
-            LocalDateTime departureDateTime = LocalDateTime.parse(Objects.requireNonNull(request.queryParam("departureDateTime").orElse(null), "'departureDateTime' query param must not be null"));
-            LocalDateTime arrivalDateTime = LocalDateTime.parse(Objects.requireNonNull(request.queryParam("arrivalDateTime").orElse(null), "'arrivalDateTime' query param must not be null"));
+            String departure = getRequestParam(request, "departure");
+            String arrival = getRequestParam(request, "arrival");
+            LocalDateTime departureDateTime = LocalDateTime.parse(getRequestParam(request, "departureDateTime"));
+            LocalDateTime arrivalDateTime = LocalDateTime.parse(getRequestParam(request, "arrivalDateTime"));
             Flux<Interconnection> interconnections = interconnectionService.getInterconnections(departure, arrival, departureDateTime, arrivalDateTime);
             return ServerResponse.ok()
                     .contentType(MediaType.APPLICATION_JSON)
-                    .body(BodyInserters.fromProducer(interconnections.map(interconnectionsDtoMapper::toDto), InterconnectionDto.class));
-        } catch (Exception e) {
+                    .body(BodyInserters.fromProducer(interconnections.map(interconnectionDtoMapper::toDto), InterconnectionDto.class));
+        } catch (RyanairTestException e) {
             log.error(e.getMessage(), e);
-            Map<String, String> json = new HashMap<>();
-            json.put("exception", e.getClass().getSimpleName());
-            json.put("description", e.getMessage());
             return ServerResponse.badRequest()
                     .contentType(MediaType.APPLICATION_JSON)
-                    .body(BodyInserters.fromValue(json));
+                    .body(BodyInserters.fromValue(exceptionDtoMapper.toDto(e)));
         }
+    }
+
+    private String getRequestParam(ServerRequest request, String paramName) {
+        return request.queryParam(paramName).orElseThrow(() -> new QueryParamIsNullException(paramName));
     }
 }

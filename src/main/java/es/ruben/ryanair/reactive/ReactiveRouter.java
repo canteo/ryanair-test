@@ -9,7 +9,7 @@ import org.springframework.web.reactive.function.server.RouterFunctions;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
 @Configuration
-public class InterconnectionsRouter {
+public class ReactiveRouter {
     @Bean
     public RouterFunction<ServerResponse> route(InterconnectionsHandler interconnectionsHandler) {
         return RouterFunctions
