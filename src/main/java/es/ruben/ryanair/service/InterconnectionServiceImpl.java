@@ -47,18 +47,18 @@ public class InterconnectionServiceImpl implements InterconnectionService {
     }
 
     private Interconnection mapToInterconnection(Flight... flights) {
-        Interconnection interconnection = new Interconnection();
-        interconnection.setStops(flights.length - 1);
-        interconnection.setLegs(Arrays.stream(flights).map(this::mapToLeg).collect(Collectors.toList()));
-        return interconnection;
+        return Interconnection.builder()
+                .stops(flights.length - 1)
+                .legs(Arrays.stream(flights).map(this::mapToLeg).collect(Collectors.toList()))
+                .build();
     }
 
     private Leg mapToLeg(Flight flight) {
-        Leg leg = new Leg();
-        leg.setDepartureAirport(flight.getDepartureAirport());
-        leg.setArrivalAirport(flight.getArrivalAirport());
-        leg.setDepartureDateTime(flight.getDepartureDateTime());
-        leg.setArrivalDateTime(flight.getArrivalDateTime());
-        return leg;
+        return Leg.builder()
+                .departureAirport(flight.getDepartureAirport())
+                .arrivalAirport(flight.getArrivalAirport())
+                .departureDateTime(flight.getDepartureDateTime())
+                .arrivalDateTime(flight.getArrivalDateTime())
+                .build();
     }
 }
