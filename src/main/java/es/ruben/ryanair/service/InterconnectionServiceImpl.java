@@ -38,22 +38,22 @@ public class InterconnectionServiceImpl implements InterconnectionService {
         Flux<Flight> secondLegFlights = scheduleService.getScheduledFlights(route.getAirportTo(), arrivalAirport, departureDateTime, arrivalDateTime);
         return firstLegFlights.flatMap(firstLegFlight -> secondLegFlights
                 .filter(secondLegFlight -> firstLegFlight.getArrivalDateTime().plusHours(2).isBefore(secondLegFlight.getDepartureDateTime()))
-                .map(secondLegFlight -> mapToInterconnection(firstLegFlight, secondLegFlight)));
+                .map(secondLegFlight -> toInterconnection(firstLegFlight, secondLegFlight)));
     }
 
     private Flux<Interconnection> generateInterconnectionsDirectFlights(Route route, LocalDateTime departureDateTime, LocalDateTime arrivalDateTime) {
         return scheduleService.getScheduledFlights(route.getAirportFrom(), route.getAirportTo(), departureDateTime, arrivalDateTime)
-                .map(this::mapToInterconnection);
+                .map(this::toInterconnection);
     }
 
-    private Interconnection mapToInterconnection(Flight... flights) {
+    private Interconnection toInterconnection(Flight... flights) {
         return Interconnection.builder()
                 .stops(flights.length - 1)
-                .legs(Arrays.stream(flights).map(this::mapToLeg).collect(Collectors.toList()))
+                .legs(Arrays.stream(flights).map(this::toLeg).collect(Collectors.toList()))
                 .build();
     }
 
-    private Leg mapToLeg(Flight flight) {
+    private Leg toLeg(Flight flight) {
         return Leg.builder()
                 .departureAirport(flight.getDepartureAirport())
                 .arrivalAirport(flight.getArrivalAirport())
